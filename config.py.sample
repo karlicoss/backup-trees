@@ -1,0 +1,5 @@
+# List of apps: https://oauth.yandex.ru/ 
+# Token: https://tech.yandex.ru/oauth/doc/dg/tasks/get-oauth-token-docpage/
+# https://oauth.yandex.ru/authorize?response_type=token&client_id=a381abe8655a4332a3af47678ea7ad45
+
+DISK_ACCESS_TOKEN = "whatever"
