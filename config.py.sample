@@ -3,3 +3,10 @@
 # https://oauth.yandex.ru/authorize?response_type=token&client_id=a381abe8655a4332a3af47678ea7ad45
 
 DISK_ACCESS_TOKEN = "whatever"
+
+# TODO move to config?
+# TODO orderedmap?
+# mapping from filesystem paths to file name on Yandex.Disk
+ITEMS = [
+    ('/usr/home/user/', 'user_dir'),
+]
