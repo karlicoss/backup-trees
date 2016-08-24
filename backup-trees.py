@@ -3,7 +3,7 @@ import logging
 from datetime import date
 
 import notify2
-from notify2 import Notification
+from notify2 import Notification, EXPIRES_NEVER
 from plumbum import local
 
 from notifications_component import NotificationsComponent
@@ -21,7 +21,7 @@ def get_notification(message: str, icon: str, expires: int) -> Notification:
 
 
 def get_error_notification(message: str) -> Notification:
-    return get_notification(message=message, icon='dialog-error', expires=-1)
+    return get_notification(message=message, icon='dialog-error', expires=EXPIRES_NEVER)
 
 
 def get_info_notification(message: str) -> Notification:
@@ -97,7 +97,7 @@ class BackupTreesComponent(NotificationsComponent):
 
     # TODO read https://developer.gnome.org/notification-spec/
     def on_start(self):
-        n = get_notification(message="Run now?", icon='dialog-question', expires=-1)
+        n = get_notification(message="Run now?", icon='dialog-question', expires=EXPIRES_NEVER)
         n.add_action("error", "<b>Run</b>", lambda n, action: self._run_backups())
         n.add_action("later", "Later", lambda n, action: self.finish())
         n.connect('closed', lambda n: self.finish())
