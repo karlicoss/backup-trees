@@ -8,18 +8,24 @@ class NotificationsComponent:
 
         # noinspection PyUnresolvedReferences
         from gi.repository import GLib
+        self.glib = GLib
         self.main_loop = GLib.MainLoop()
         notify2.init(name, mainloop='glib')
 
     def start(self):
         # TODO log exceptions?
-        # TODO I don't like the order of commands...
-        self.on_start()
+        self.glib.timeout_add(100, lambda: self.on_start())
+        print("STARTING MAIN LOOP")
         self.main_loop.run()
 
     def finish(self):
         self.on_stop()
+        print("FINISHING MAIN LOOP")
         self.main_loop.quit()
+
+    # TODO looks kinda ugly...
+    def finish_async(self):
+        self.glib.timeout_add(1000, lambda: self.finish())
 
     def on_start(self):
         raise NotImplementedError

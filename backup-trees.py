@@ -9,6 +9,9 @@ from plumbum import local
 from notifications_component import NotificationsComponent
 from yadisk import YandexDisk
 
+def get_wifi_name():
+    return local['iwgetid']('-r').strip()
+
 
 def get_notification(message: str, icon: str, expires: int) -> Notification:
     n = notify2.Notification(
@@ -37,17 +40,12 @@ tree = local['tree']
 class Backuper:
     _ERROR_OPENING_DIR = '[error opening dir]'  # tree command prints error messages in stdout :(
 
-    def __init__(self):
+    def __init__(self, disk, items):
         self.notification = []
         self.has_error = False
 
-        try:
-            from config import DISK_ACCESS_TOKEN, ITEMS
-        except ImportError as e:
-            raise RuntimeError("Please set up config.py!", e)
-
-        self.disk = YandexDisk(DISK_ACCESS_TOKEN)
-        self.items = ITEMS
+        self.disk = disk
+        self.items = items
 
     def _log_and_notify(self, s: str):
         self.notification.append(s)
@@ -87,21 +85,34 @@ class Backuper:
 class BackupTreesComponent(NotificationsComponent):
     def __init__(self):
         super().__init__('trees-dumper')
+        try:
+            from config import DISK_ACCESS_TOKEN, ITEMS, ALLOWED_NETWORKS
+        except ImportError as e:
+            raise RuntimeError("Please set up config.py!", e)
+
+        self.backuper = Backuper(disk=YandexDisk(DISK_ACCESS_TOKEN), items=ITEMS)
+        self.allowed_networks = ALLOWED_NETWORKS
 
     def _run_backups(self):
         try:
-            Backuper().run()
+            self.backuper.run()
         except Exception as e:
             logger.exception(e)
             get_error_notification('Exception while running the tool: ' + str(e)).show()
 
     # TODO read https://developer.gnome.org/notification-spec/
     def on_start(self):
-        n = get_notification(message="Run now?", icon='dialog-question', expires=EXPIRES_NEVER)
-        n.add_action("error", "<b>Run</b>", lambda n, action: self._run_backups())
-        n.add_action("later", "Later", lambda n, action: self.finish())
-        n.connect('closed', lambda n: self.finish())
-        n.show()
+        wifi = get_wifi_name()
+        if wifi in self.allowed_networks:
+            # no need to ask
+            self._run_backups()
+            self.finish_async()
+        else:
+            n = get_notification(message="Run now?", icon='dialog-question', expires=EXPIRES_NEVER)
+            n.add_action("error", "<b>Run</b>", lambda n, action: self._run_backups())
+            n.add_action("later", "Later", lambda n, action: None) # fake button, same as 'closed'
+            n.connect('closed', lambda n: self.finish_async())
+            n.show()
 
     def on_stop(self):
         pass
@@ -110,7 +121,6 @@ class BackupTreesComponent(NotificationsComponent):
 def main():
     component = BackupTreesComponent()
     component.start()
-
 
 if __name__ == '__main__':
     main()

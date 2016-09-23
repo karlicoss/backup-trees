@@ -10,3 +10,7 @@ DISK_ACCESS_TOKEN = "whatever"
 ITEMS = [
     ('/usr/home/user/', 'user_dir'),
 ]
+
+ALLOWED_NETWORKS = [
+    'some_sid',
+]
