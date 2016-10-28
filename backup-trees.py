@@ -31,8 +31,16 @@ def get_info_notification(message: str) -> Notification:
     return get_notification(message=message, icon='dialog-information', expires=10 * 1000)
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+def make_logger():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    logger.addHandler(ch)    
+    return logger
+
+logger = make_logger()
+
 
 tree = local['tree']
 
@@ -98,16 +106,18 @@ class BackupTreesComponent(NotificationsComponent):
             self.backuper.run()
         except Exception as e:
             logger.exception(e)
-            get_error_notification('Exception while running the tool: ' + str(e)).show()
+            get_error_notification("Exception while running the tool: " + str(e)).show()
 
     # TODO read https://developer.gnome.org/notification-spec/
     def on_start(self):
         wifi = get_wifi_name()
         if wifi in self.allowed_networks:
+            logger.info("Network %s whitelisted, no need for confirmation", wifi)
             # no need to ask
             self._run_backups()
             self.finish_async()
         else:
+            logger.info("Network %s is not whitelisted, asking for confirmation", wifi)
             n = get_notification(message="Run now?", icon='dialog-question', expires=EXPIRES_NEVER)
             n.add_action("error", "<b>Run</b>", lambda n, action: self._run_backups())
             n.add_action("later", "Later", lambda n, action: None) # fake button, same as 'closed'
@@ -119,6 +129,7 @@ class BackupTreesComponent(NotificationsComponent):
 
 
 def main():
+    logger.info("Starting component...")
     component = BackupTreesComponent()
     component.start()
 
