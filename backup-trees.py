@@ -10,7 +10,7 @@ from notifications_component import NotificationsComponent
 from yadisk import YandexDisk
 
 def get_wifi_name():
-    return local['iwgetid']('-r').strip()
+    return local['/sbin/iwgetid']('-r').strip()
 
 
 def get_notification(message: str, icon: str, expires: int) -> Notification:
@@ -34,9 +34,6 @@ def get_info_notification(message: str) -> Notification:
 def make_logger():
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-    logger.addHandler(ch)    
     return logger
 
 logger = make_logger()
@@ -60,7 +57,7 @@ class Backuper:
         logger.info(s)
 
     def _backup_tree(self, path: str, name: str):
-        logging.info("Backing up " + path)
+        logger.info("Backing up " + path)
         suffix = str(date.today())
         ret_code, out, err = tree[path].run()
         if ret_code != 0 \
@@ -72,9 +69,9 @@ class Backuper:
             return
 
         data = out
-        logging.info("Dumped the tree...")
+        logger.info("Dumped the tree...")
         disk_path = 'trees/' + name + "_" + suffix + ".tree.txt"
-        logging.info("Uploading to Disk " + disk_path)
+        logger.info("Uploading to Disk " + disk_path)
         self.disk.upload_file(data.encode('utf-8'), disk_path)
         self._log_and_notify("{}: SUCCESS".format(path))
 
@@ -112,7 +109,7 @@ class BackupTreesComponent(NotificationsComponent):
     def on_start(self):
         wifi = get_wifi_name()
         if wifi in self.allowed_networks:
-            logger.info("Network %s whitelisted, no need for confirmation", wifi)
+            logger.info("Network %s is whitelisted, no need for confirmation", wifi)
             # no need to ask
             self._run_backups()
             self.finish_async()
