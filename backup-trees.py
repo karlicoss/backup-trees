@@ -2,19 +2,15 @@
 import logging
 from datetime import date
 
-import notify2
 from notify2 import Notification, EXPIRES_NEVER
 from plumbum import local
 
-from notifications_component import NotificationsComponent
+from notify2_component import Notify2Component
 from yadisk import YandexDisk
-
-def get_wifi_name():
-    return local['/sbin/iwgetid']('-r').strip()
 
 
 def get_notification(message: str, icon: str, expires: int) -> Notification:
-    n = notify2.Notification(
+    n = Notification(
         summary="Trees dumper",
         message=message,
         icon=icon,
@@ -36,8 +32,8 @@ def make_logger():
     logger.setLevel(logging.DEBUG)
     return logger
 
-logger = make_logger()
 
+logger = make_logger()
 
 tree = local['tree']
 
@@ -87,16 +83,15 @@ class Backuper:
         self._get_notification().show()
 
 
-class BackupTreesComponent(NotificationsComponent):
+class BackupTreesComponent(Notify2Component):
     def __init__(self):
         super().__init__('trees-dumper')
         try:
-            from config import DISK_ACCESS_TOKEN, ITEMS, ALLOWED_NETWORKS
+            from config import DISK_ACCESS_TOKEN, ITEMS
         except ImportError as e:
             raise RuntimeError("Please set up config.py!", e)
 
         self.backuper = Backuper(disk=YandexDisk(DISK_ACCESS_TOKEN), items=ITEMS)
-        self.allowed_networks = ALLOWED_NETWORKS
 
     def _run_backups(self):
         try:
@@ -107,19 +102,8 @@ class BackupTreesComponent(NotificationsComponent):
 
     # TODO read https://developer.gnome.org/notification-spec/
     def on_start(self):
-        wifi = get_wifi_name()
-        if wifi in self.allowed_networks:
-            logger.info("Network %s is whitelisted, no need for confirmation", wifi)
-            # no need to ask
-            self._run_backups()
-            self.finish_async()
-        else:
-            logger.info("Network %s is not whitelisted, asking for confirmation", wifi)
-            n = get_notification(message="Run now?", icon='dialog-question', expires=EXPIRES_NEVER)
-            n.add_action("error", "<b>Run</b>", lambda n, action: self._run_backups())
-            n.add_action("later", "Later", lambda n, action: None) # fake button, same as 'closed'
-            n.connect('closed', lambda n: self.finish_async())
-            n.show()
+        self._run_backups()
+        self.finish_async()
 
     def on_stop(self):
         pass
@@ -127,8 +111,7 @@ class BackupTreesComponent(NotificationsComponent):
 
 def main():
     logger.info("Starting component...")
-    component = BackupTreesComponent()
-    component.start()
+    BackupTreesComponent().start()
 
 if __name__ == '__main__':
     main()
