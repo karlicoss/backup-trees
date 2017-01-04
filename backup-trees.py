@@ -48,9 +48,9 @@ class Backuper:
         self.disk = disk
         self.items = items
 
-    def _log_and_notify(self, s: str):
+    def _log_and_notify(self, s: str, level: int=logging.INFO):
         self.notification.append(s)
-        logger.info(s)
+        logger.log(level, s)
 
     def _backup_tree(self, path: str, name: str):
         logger.info("Backing up " + path)
@@ -61,13 +61,13 @@ class Backuper:
                 or out.find(Backuper._ERROR_OPENING_DIR, 0, 1000) != -1:  # well, 1000 chars is enough to detect error message
 
             self.has_error = True
-            self._log_and_notify("{}: ERROR\n\treturn code {}\n\terror message {}\n\toutput {}".format(path, ret_code, err, out))
+            self._log_and_notify("{}: ERROR\n\treturn code {}\n\terror message {}\n\toutput {}".format(path, ret_code, err, out), level=logging.ERROR)
             return
 
         data = out
-        logger.info("Dumped the tree...")
+        logger.debug("Dumped the tree...")
         disk_path = 'trees/' + name + "_" + suffix + ".tree.txt"
-        logger.info("Uploading to Disk " + disk_path)
+        logger.debug("Uploading to Disk " + disk_path)
         self.disk.upload_file(data.encode('utf-8'), disk_path)
         self._log_and_notify("{}: SUCCESS".format(path))
 
@@ -110,6 +110,16 @@ class BackupTreesComponent(Notify2Component):
 
 
 def main():
+    try:
+        import coloredlogs
+        coloredlogs.install(fmt="%(asctime)s [%(name)s] %(levelname)s %(message)s")
+    except ImportError as e:
+        if e.name == 'coloredlogs':
+            logger.exception(e)
+            logger.warning("coloredlogs is not installed. You should try it!")
+        else:
+            raise e
+    logging.getLogger('requests').setLevel(logging.CRITICAL)
     logger.info("Starting component...")
     BackupTreesComponent().start()
 

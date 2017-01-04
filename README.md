@@ -17,3 +17,4 @@ Then, acquire the Yandex.Disk token and fill items to back up.
 
 * notification daemon, supporting actions
 * `pynotify2`
+* `coloredlogs` (optional)
