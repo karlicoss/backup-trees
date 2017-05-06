@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import logging
 from datetime import date
+import sys
 
 from plumbum import local
 from yadisk import YandexDisk
@@ -48,6 +49,7 @@ class Backuper:
         self._log_and_notify("{}: SUCCESS".format(path))
 
     def run(self):
+        logger.info("Using items " + str(self.items))
         for path, name in self.items:
             self._backup_tree(path, name)
 
@@ -63,8 +65,18 @@ def main():
         else:
             raise e
     logging.getLogger('requests').setLevel(logging.CRITICAL)
+
     import config
-    backuper = Backuper(disk=YandexDisk(config.DISK_ACCESS_TOKEN), items=config.ITEMS)
+    items = []
+    eargs = sys.argv[1:]
+    extras = len(eargs)
+    if extras > 0:
+        for i in range(0, extras, 2):
+            items.append((eargs[i], eargs[i + 1]))
+    else:
+        items = config.ITEMS
+
+    backuper = Backuper(disk=YandexDisk(config.DISK_ACCESS_TOKEN), items=items)
     backuper.run()
 
 if __name__ == '__main__':
