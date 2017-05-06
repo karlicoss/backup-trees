@@ -15,6 +15,4 @@ Then, acquire the Yandex.Disk token and fill items to back up.
 
 # Prerequisites
 
-* notification daemon, supporting actions
-* `pynotify2`
 * `coloredlogs` (optional)

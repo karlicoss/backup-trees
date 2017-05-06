@@ -2,36 +2,14 @@
 import logging
 from datetime import date
 
-from notify2 import Notification, EXPIRES_NEVER
 from plumbum import local
-
-from notify2_component import Notify2Component
 from yadisk import YandexDisk
 
 
-def get_notification(message: str, icon: str, expires: int) -> Notification:
-    n = Notification(
-        summary="Trees dumper",
-        message=message,
-        icon=icon,
-    )
-    n.set_timeout(expires)
-    return n
-
-
-def get_error_notification(message: str) -> Notification:
-    return get_notification(message=message, icon='dialog-error', expires=EXPIRES_NEVER)
-
-
-def get_info_notification(message: str) -> Notification:
-    return get_notification(message=message, icon='dialog-information', expires=10 * 1000)
-
-
 def make_logger():
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger("BackupTrees")
     logger.setLevel(logging.DEBUG)
     return logger
-
 
 logger = make_logger()
 
@@ -42,14 +20,12 @@ class Backuper:
     _ERROR_OPENING_DIR = '[error opening dir]'  # tree command prints error messages in stdout :(
 
     def __init__(self, disk, items):
-        self.notification = []
         self.has_error = False
 
         self.disk = disk
         self.items = items
 
     def _log_and_notify(self, s: str, level: int=logging.INFO):
-        self.notification.append(s)
         logger.log(level, s)
 
     def _backup_tree(self, path: str, name: str):
@@ -71,42 +47,9 @@ class Backuper:
         self.disk.upload_file(data.encode('utf-8'), disk_path)
         self._log_and_notify("{}: SUCCESS".format(path))
 
-    def _get_notification(self) -> Notification:
-        if self.has_error:
-            return get_error_notification('\n'.join(self.notification))
-        else:
-            return get_info_notification('\n'.join(self.notification))
-
     def run(self):
         for path, name in self.items:
             self._backup_tree(path, name)
-        self._get_notification().show()
-
-
-class BackupTreesComponent(Notify2Component):
-    def __init__(self):
-        super().__init__('trees-dumper')
-        try:
-            from config import DISK_ACCESS_TOKEN, ITEMS
-        except ImportError as e:
-            raise RuntimeError("Please set up config.py!", e)
-
-        self.backuper = Backuper(disk=YandexDisk(DISK_ACCESS_TOKEN), items=ITEMS)
-
-    def _run_backups(self):
-        try:
-            self.backuper.run()
-        except Exception as e:
-            logger.exception(e)
-            get_error_notification("Exception while running the tool: " + str(e)).show()
-
-    # TODO read https://developer.gnome.org/notification-spec/
-    def on_start(self):
-        self._run_backups()
-        self.finish_async()
-
-    def on_stop(self):
-        pass
 
 
 def main():
@@ -120,8 +63,9 @@ def main():
         else:
             raise e
     logging.getLogger('requests').setLevel(logging.CRITICAL)
-    logger.info("Starting component...")
-    BackupTreesComponent().start()
+    import config
+    backuper = Backuper(disk=YandexDisk(config.DISK_ACCESS_TOKEN), items=config.ITEMS)
+    backuper.run()
 
 if __name__ == '__main__':
     main()
