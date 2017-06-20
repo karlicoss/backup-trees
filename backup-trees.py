@@ -6,16 +6,9 @@ import sys
 from plumbum import local
 from yadisk import YandexDisk
 
-
-def make_logger():
-    logger = logging.getLogger("BackupTrees")
-    logger.setLevel(logging.DEBUG)
-    return logger
-
-logger = make_logger()
+from kython import *
 
 tree = local['tree']
-
 
 class Backuper:
     _ERROR_OPENING_DIR = '[error opening dir]'  # tree command prints error messages in stdout :(
@@ -26,11 +19,13 @@ class Backuper:
         self.disk = disk
         self.items = items
 
+        self.logger = logging.getLogger("BackupTrees")
+
     def _log_and_notify(self, s: str, level: int=logging.INFO):
-        logger.log(level, s)
+        self.logger.log(level, s)
 
     def _backup_tree(self, path: str, name: str):
-        logger.info("Backing up " + path)
+        self.logger.info("Backing up " + path)
         suffix = str(date.today())
         ret_code, out, err = tree[path].run()
         if ret_code != 0 \
@@ -42,29 +37,20 @@ class Backuper:
             return
 
         data = out
-        logger.debug("Dumped the tree...")
+        self.logger.debug("Dumped the tree...")
         disk_path = 'trees/' + name + "_" + suffix + ".tree.txt"
-        logger.debug("Uploading to Disk " + disk_path)
+        self.logger.debug("Uploading to Disk " + disk_path)
         self.disk.upload_file(data.encode('utf-8'), disk_path)
         self._log_and_notify("{}: SUCCESS".format(path))
 
     def run(self):
-        logger.info("Using items " + str(self.items))
+        self.logger.info("Using items " + str(self.items))
         for path, name in self.items:
             self._backup_tree(path, name)
 
 
 def main():
-    try:
-        import coloredlogs
-        coloredlogs.install(fmt="%(asctime)s [%(name)s] %(levelname)s %(message)s")
-    except ImportError as e:
-        if e.name == 'coloredlogs':
-            logger.exception(e)
-            logger.warning("coloredlogs is not installed. You should try it!")
-        else:
-            raise e
-    logging.getLogger('requests').setLevel(logging.CRITICAL)
+    setup_logging()
 
     import config
     items = []
