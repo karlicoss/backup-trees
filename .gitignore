@@ -6,26 +6,28 @@
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff:
-.idea/workspace.xml
-.idea/tasks.xml
+.idea/**/workspace.xml
+.idea/**/tasks.xml
 .idea/dictionaries
-.idea/vcs.xml
-.idea/jsLibraryMappings.xml
 
 # Sensitive or high-churn files:
-.idea/dataSources.ids
-.idea/dataSources.xml
-.idea/dataSources.local.xml
-.idea/sqlDataSources.xml
-.idea/dynamic.xml
-.idea/uiDesigner.xml
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.xml
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
 
 # Gradle:
-.idea/gradle.xml
-.idea/libraries
+.idea/**/gradle.xml
+.idea/**/libraries
+
+# CMake
+cmake-build-debug/
 
 # Mongo Explorer plugin:
-.idea/mongoSettings.xml
+.idea/**/mongoSettings.xml
 
 ## File-based project format:
 *.iws
@@ -41,6 +43,9 @@
 # JIRA plugin
 atlassian-ide-plugin.xml
 
+# Cursive Clojure plugin
+.idea/replstate.xml
+
 # Crashlytics plugin (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
 crashlytics.properties
@@ -52,9 +57,11 @@ fabric.properties
 
 # *.iml
 # modules.xml
-# .idea/misc.xml 
+# .idea/misc.xml
 # *.ipr
 
+# Sonarlint plugin
+.idea/sonarlint
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -79,6 +86,7 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -125,7 +133,7 @@ docs/_build/
 # PyBuilder
 target/
 
-# IPython Notebook
+# Jupyter Notebook
 .ipynb_checkpoints
 
 # pyenv
@@ -134,15 +142,28 @@ target/
 # celery beat schedule file
 celerybeat-schedule
 
+# SageMath parsed files
+*.sage.py
+
 # dotenv
 .env
 
 # virtualenv
+.venv
 venv/
 ENV/
 
 # Spyder project settings
 .spyderproject
+.spyproject
 
 # Rope project settings
 .ropeproject
+
+# mkdocs documentation
+/site
+
+# End of https://www.gitignore.io/api/intellij,python
+
+config.py
+yadisk_secrets.py
