@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# pip3 install plumbum
+
 import logging
 from datetime import date
 import sys
